@@ -178,13 +178,8 @@ async function checkAllAddresses() {
         // if the entry is too old, we get rid of it
         let date = new Date();
         let now = date.getTime();
-        if ((entry.timeAddedToWatchlist + (24 * 60000 * 60)) > now) {
-            //has been added less than 24h ago
-            const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance, entry.timeAddedToWatchlist);
-            newWatchDB.push(newEntry);
-        } else {
-            bot.sendMessage(entry.chatID, `Due to API limitations, I can only watch an address for 24 hours.\n\nYou asked me to watch ${entry.ETHaddress} quite some time ago, so I dropped it from my list. Sorry about it!`);
-        }
+        const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance, entry.timeAddedToWatchlist);
+        newWatchDB.push(newEntry);
     }
     watchDB = newWatchDB;
     fs.writeFileSync(WatchListFilePath,JSON.stringify(watchDB),'utf8')
