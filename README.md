@@ -13,11 +13,16 @@ The bot is using the [Etherscan API](https://etherscan.io/apis). In order to avo
 ## To-do list
 
 This current version is a very barebone MVP, and there's a lot more to do:
-- [ ] Porting it to Web3.js so the API limitations don't apply.
+- [x] Porting it to Web3.js so the API limitations don't apply.
 - [x] Moved from Ethplorer to Etherscan, as it has more generous API limits.
-- [ ] Implementing a database, so the watchlist is not dropped every time the bot is restarted.
+- [x] Implementing a database, so the watchlist is not dropped every time the bot is restarted.
 - [x] Implementing a /forget command.
 
 # License 
 
 Released under MIT.
+
+# Usage
+
+npm install
+node index.js
