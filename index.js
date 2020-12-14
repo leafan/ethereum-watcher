@@ -6,17 +6,16 @@ const TelegramBot = require('node-telegram-bot-api');
 const cron = require("node-cron");
 var etherscan = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
 
-// Heroku deployment
-const url = process.env.NOW_URL;
-
 const options = {
     webHook: {
         port: process.env.PORT
     }
 };
+
+// telegram bot url
 const url = process.env.APP_URL;
-  
-const telegramBotToken = process.env.TOKEN;
+
+const telegramBotToken = process.env.TELE_BOT_TOKEN;
 const bot = new TelegramBot(telegramBotToken, options);
 const botOwner = process.env.BOTOWNER;
 
