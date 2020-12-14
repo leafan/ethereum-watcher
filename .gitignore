@@ -1,6 +1,7 @@
 .env
 .idea
 node_modules*
+config.js
 logs/
 npm-debug.log
 yarn-error.log
