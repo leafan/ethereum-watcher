@@ -1,1 +1,1 @@
-[]
+[{"chatID":-453320281,"ETHaddress":"0x0000000000007F150Bd6f54c40A34d7C3d5e9f56","currentBalance":"664746006369168234999","timeAddedToWatchlist":1607939771796},{"chatID":-453320281,"ETHaddress":"0xff3769cdbd31893ef1b10a01ee0d8bd1f3773899","currentBalance":"148265796766713603237","timeAddedToWatchlist":1607939796894}]

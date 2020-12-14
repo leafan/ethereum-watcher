@@ -85,11 +85,11 @@ bot.onText(/\/watch (.+)/, async (msg, match) => {
         balanceToDisplay = balanceToDisplay.toFixed(4);
         bot.sendMessage(chatId, `Started watching the address ${ETHaddress}\nIt currently has ${balanceToDisplay} ETH.`);
         // Debug admin message for the bot owner
-        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone started watching the address\n${ETHaddress}\n`);
+        //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone started watching the address\n${ETHaddress}\n`);
     } else {
         bot.sendMessage(chatId, "This is not a valid ETH address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>", {parse_mode: "HTML"});
         // Debug admin message for the bot owner
-        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to watch an invalid address\n${ETHaddress}\n`);
+        //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to watch an invalid address\n${ETHaddress}\n`);
 
     }
 });
@@ -103,7 +103,7 @@ bot.onText(/\/forget (.+)/, (msg, match) => {
         if ((entry.chatID === chatId) && (entry.ETHaddress === ETHaddress)) {
             bot.sendMessage(chatId, `I stopped monitoring the address ${entry.ETHaddress}.`);
             // Debug admin message for the bot owner
-            bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone stopped watching the address\n${ETHaddress}\n`);
+            //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone stopped watching the address\n${ETHaddress}\n`);
             nothingToForget = false;
         } else {
             newWatchDB.push(entry);
@@ -112,7 +112,7 @@ bot.onText(/\/forget (.+)/, (msg, match) => {
     if (nothingToForget) {
         bot.sendMessage(chatId, `I couldn't find the address ${ETHaddress} on the watchlist.`);
         // Debug admin message for the bot owner
-        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to remove this non-existing address from watchlist:\n${ETHaddress}\n`);
+        //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to remove this non-existing address from watchlist:\n${ETHaddress}\n`);
     }
     watchDB = newWatchDB;
 });
@@ -140,7 +140,7 @@ bot.onText(/\/check/, (msg) => {
     // To manually trigger a check. For testing purposes.
     checkAllAddresses();
     // Debug admin message for the bot owner
-    bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone called the /check function.`);
+    //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone called the /check function.`);
 });
 
 // *********************************
@@ -185,7 +185,7 @@ async function checkAllAddresses() {
     fs.writeFileSync(WatchListFilePath,JSON.stringify(watchDB),'utf8')
 
     if (debugNumberOfAlertsDelivered > 0) {
-        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nNumber of notifications delivered: ${debugNumberOfAlertsDelivered}`);
+        //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nNumber of notifications delivered: ${debugNumberOfAlertsDelivered}`);
         debugNumberOfAlertsDelivered = 0;
     }
 }
@@ -205,7 +205,7 @@ async function Main() {
     });
 
     try {
-        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone called the /check function.`);
+        //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone called the /check function.`);
 
         let data = await fs.readFileSync(WatchListFilePath, 'utf8');
         watchDB = JSON.parse(data);
