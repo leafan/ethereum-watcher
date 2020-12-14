@@ -5,14 +5,16 @@
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require("node-cron");
 const Web3 = require('web3');
+const config = require('config')
 let fs = require("fs");
 
-const web3 = new Web3(process.env.PROVIDER || "https://kovan.infura.io/v3/a17d484065334e38bd8b6475ca266c88");
 
-const telegramBotToken = process.env.TELE_BOT_TOKEN || '1411044694:AAHFomo3dvR9BlW2I1r37K6q61G7weVXvXY';
+const web3 = new Web3(config.PROVIDER);
+
+const telegramBotToken = config.TELE_BOT_TOKEN;
 const bot = new TelegramBot(telegramBotToken, {polling: true});
-const botOwner = process.env.BOTOWNER || '1187725682';
-const WatchListFilePath = './watch_list.text';
+const botOwner = config.BOTOWNER || '1187725682';
+const WatchListFilePath = './watch_list.txt';
 
 // Class to store addresses, previous balances and the Telegram chatID
 class WatchEntry {
@@ -185,7 +187,8 @@ async function checkAllAddresses() {
         }
     }
     watchDB = newWatchDB;
-    // Debug admin message for the bot owner
+    fs.writeFileSync(WatchListFilePath,JSON.stringify(watchDB),'utf8')
+
     if (debugNumberOfAlertsDelivered > 0) {
         bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nNumber of notifications delivered: ${debugNumberOfAlertsDelivered}`);
         debugNumberOfAlertsDelivered = 0;
@@ -194,13 +197,9 @@ async function checkAllAddresses() {
 
 function  watchAdd(ev){
     const result = watchDB.filter(item => item.ETHaddress === ev.ETHaddress);
-
     if(result.length === 0){
         watchDB.push(ev);
-        fs.writeFileSync(WatchListFilePath,JSON.stringify(watchDB),'utf8')
     }
-
-
 }
 
 
