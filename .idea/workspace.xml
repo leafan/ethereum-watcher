@@ -18,6 +18,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="UPDATE_TYPE" value="REBASE" />
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/index.js" root0="SKIP_INSPECTION" />
+  </component>
   <component name="ProjectId" id="1ldVE5jnCiokh8X5iX7UvZBbd5u" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -65,7 +68,7 @@
       <workItem from="1607926844401" duration="760000" />
       <workItem from="1607929084427" duration="6478000" />
       <workItem from="1607936383000" duration="361000" />
-      <workItem from="1607938199664" duration="717000" />
+      <workItem from="1607938199664" duration="1078000" />
     </task>
     <task id="LOCAL-00001" summary="add config">
       <created>1607938672860</created>
