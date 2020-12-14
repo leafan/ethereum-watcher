@@ -5,7 +5,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require("node-cron");
 const Web3 = require('web3');
-const config = require('config')
+const config = require('./config')
 let fs = require("fs");
 
 
