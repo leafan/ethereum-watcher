@@ -16,3 +16,4 @@ run/
 *.un~
 typings/
 .nyc_output/
+watch_list.txt

@@ -18,11 +18,12 @@ const WatchListFilePath = './watch_list.txt';
 
 // Class to store addresses, previous balances and the Telegram chatID
 class WatchEntry {
-    constructor(chatID, ETHaddress, currentBalance, timeAddedToWatchlist) {
+    constructor(chatID, ETHaddress, currentBalance, timeAddedToWatchlist, addressNote) {
         this.chatID = chatID;
         this.ETHaddress = ETHaddress;
         this.currentBalance = currentBalance;
         this.timeAddedToWatchlist = timeAddedToWatchlist;
+        this.addressNote = addressNote;
     }
 }
 
@@ -73,21 +74,22 @@ bot.onText(/\/start/, (msg) => {
 });
 
 // Telegram /watch command
-bot.onText(/\/watch (.+)/, async (msg, match) => {
+bot.onText(/\/watch (.+) (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const ETHaddress = match[1];
+    const addressNote = match[2];
     if (isAddress(ETHaddress)) {
         let balance = await web3.eth.getBalance(ETHaddress);
         let date = new Date();
         let timestamp = date.getTime();
-        watchAdd(new WatchEntry(chatId, ETHaddress, balance, timestamp))
+        watchAdd(new WatchEntry(chatId, ETHaddress, balance, timestamp, addressNote))
         let balanceToDisplay = balance / 1e18;
         balanceToDisplay = balanceToDisplay.toFixed(4);
         bot.sendMessage(chatId, `Started watching the address ${ETHaddress}\nIt currently has ${balanceToDisplay} ETH.`);
         // Debug admin message for the bot owner
         //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone started watching the address\n${ETHaddress}\n`);
     } else {
-        bot.sendMessage(chatId, "This is not a valid ETH address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>", {parse_mode: "HTML"});
+        bot.sendMessage(chatId, "This is not a valid ETH address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa myAddress1</code>", {parse_mode: "HTML"});
         // Debug admin message for the bot owner
         //bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to watch an invalid address\n${ETHaddress}\n`);
 
@@ -125,7 +127,7 @@ bot.onText(/\/list/, (msg) => {
     watchDB.forEach(function (entry) {
         if (entry.chatID === chatId) {
             nothingToList = false;
-            listOfAddresses = listOfAddresses + `* ${entry.ETHaddress}\n`;
+            listOfAddresses = listOfAddresses + `* ${entry.ETHaddress}` + `, ${entry.addressNote}\n`;
         }
     });
     if (nothingToList) {
@@ -167,10 +169,10 @@ async function checkAllAddresses() {
 
             if (difference > 0) {
                 //incoming transfer
-                bot.sendMessage(entry.chatID, `I see incoming funds!\n\n${difference} ETH arrived to the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
+                bot.sendMessage(entry.chatID, `address: ${entry.addressNote} incoming funds!\n\n${difference} ETH arrived to the address "https://cn.etherscan.com/address/${entry.ETHaddress}" since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
             } else {
                 //outgoing transfer
-                bot.sendMessage(entry.chatID, `Funds are flying out!\n\n${difference} ETH left the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
+                bot.sendMessage(entry.chatID, `address: ${entry.addressNote} flying out funds!\n\n${difference} ETH left the address "https://cn.etherscan.com/address/${entry.ETHaddress}" since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
             }
             // debug
             debugNumberOfAlertsDelivered = debugNumberOfAlertsDelivered + 1;
@@ -178,7 +180,8 @@ async function checkAllAddresses() {
         // if the entry is too old, we get rid of it
         let date = new Date();
         let now = date.getTime();
-        const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance, entry.timeAddedToWatchlist);
+        const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance, entry.timeAddedToWatchlist, entry.addressNote);
+
         newWatchDB.push(newEntry);
     }
     watchDB = newWatchDB;
