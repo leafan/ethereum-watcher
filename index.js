@@ -4,20 +4,15 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 const cron = require("node-cron");
-var etherscan = require('etherscan-api').init(process.env.ETHERSCAN_KEY);
+const Web3 = require('web3');
+let fs = require("fs");
 
-const options = {
-    webHook: {
-        port: process.env.PORT
-    }
-};
+const web3 = new Web3(process.env.PROVIDER || "https://kovan.infura.io/v3/a17d484065334e38bd8b6475ca266c88");
 
-// telegram bot url
-const url = process.env.APP_URL;
-
-const telegramBotToken = process.env.TELE_BOT_TOKEN;
-const bot = new TelegramBot(telegramBotToken, options);
-const botOwner = process.env.BOTOWNER;
+const telegramBotToken = process.env.TELE_BOT_TOKEN || '1411044694:AAHFomo3dvR9BlW2I1r37K6q61G7weVXvXY';
+const bot = new TelegramBot(telegramBotToken, {polling: true});
+const botOwner = process.env.BOTOWNER || '1187725682';
+const WatchListFilePath = './watch_list.text';
 
 // Class to store addresses, previous balances and the Telegram chatID
 class WatchEntry {
@@ -30,7 +25,7 @@ class WatchEntry {
 }
 
 // Array to store WatchEntry objects
-var watchDB = [];
+let watchDB = [];
 
 // *********************************
 // Helper functions
@@ -59,58 +54,55 @@ bot.on('polling_error', (error) => {
 
 // Telegram checking for commands w/o parameters
 bot.on('message', (msg) => {
+
     const chatId = msg.chat.id;
     if (msg.text === '/watch') {
-        bot.sendMessage(chatId, 'You need to specify an address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>' ,{parse_mode : "HTML"});
+        bot.sendMessage(chatId, 'You need to specify an address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>', {parse_mode: "HTML"});
     }
     if (msg.text === "/forget") {
-        bot.sendMessage(chatId, 'You need to specify an address.\nType /forget followed by an address you are watching currently, like this:\n<code>/forget 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>' ,{parse_mode : "HTML"});
+        bot.sendMessage(chatId, 'You need to specify an address.\nType /forget followed by an address you are watching currently, like this:\n<code>/forget 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>', {parse_mode: "HTML"});
     }
 });
 
 // Telegram /start command
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "***************\n\nHey there! I am a Telegram bot by @torsten1.\n\nI am here to watch Ethereum addresses. I will ping you if there's a change in balance. This is useful if you've just sent a transaction and want to be notified when it arrives. Due to API limitations, I can watch an address for no more than 24 hours.\n\n<b>Commands</b>\n\n* <code>/watch (address)</code> - start watching an address.\n* <code>/forget (address)</code> - stop watching an address.\n* <code>/list</code> - list the addresses you are watching.\n\nHave fun :)" ,{parse_mode : "HTML"});
+    bot.sendMessage(chatId, "***************\n\nHey there! I am a Telegram bot by @torsten1.\n\nI am here to watch Ethereum addresses. I will ping you if there's a change in balance. This is useful if you've just sent a transaction and want to be notified when it arrives. Due to API limitations, I can watch an address for no more than 24 hours.\n\n<b>Commands</b>\n\n* <code>/watch (address)</code> - start watching an address.\n* <code>/forget (address)</code> - stop watching an address.\n* <code>/list</code> - list the addresses you are watching.\n\nHave fun :)", {parse_mode: "HTML"});
 });
 
 // Telegram /watch command
-bot.onText(/\/watch (.+)/, (msg, match) => {
+bot.onText(/\/watch (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const ETHaddress = match[1];
     if (isAddress(ETHaddress)) {
-        var balance = etherscan.account.balance(ETHaddress);
-        balance.then(function(balanceData){
-            var date = new Date();
-            var timestamp = date.getTime();
-            const newEntry = new WatchEntry(chatId, ETHaddress, balanceData.result, timestamp);
-            watchDB.push(newEntry);
-            var balanceToDisplay = balanceData.result / 1000000000000000000;
-            balanceToDisplay = balanceToDisplay.toFixed(4);
-            bot.sendMessage(chatId, `Started watching the address ${ETHaddress}\nIt currently has ${balanceToDisplay} ETH.`);
-            // Debug admin message for the bot owner
-            bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone started watching the address\n${ETHaddress}\n`);
-        });
+        let balance = await web3.eth.getBalance(ETHaddress);
+        let date = new Date();
+        let timestamp = date.getTime();
+        watchAdd(new WatchEntry(chatId, ETHaddress, balance, timestamp))
+        let balanceToDisplay = balance / 1e18;
+        balanceToDisplay = balanceToDisplay.toFixed(4);
+        bot.sendMessage(chatId, `Started watching the address ${ETHaddress}\nIt currently has ${balanceToDisplay} ETH.`);
+        // Debug admin message for the bot owner
+        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone started watching the address\n${ETHaddress}\n`);
     } else {
-        bot.sendMessage(chatId, "This is not a valid ETH address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>" ,{parse_mode : "HTML"});
+        bot.sendMessage(chatId, "This is not a valid ETH address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>", {parse_mode: "HTML"});
         // Debug admin message for the bot owner
         bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone tried to watch an invalid address\n${ETHaddress}\n`);
 
     }
 });
-
 // Telegram /forget command
 bot.onText(/\/forget (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const ETHaddress = match[1];
     var newWatchDB = [];
     var nothingToForget = true;
-    watchDB.forEach(function(entry) {
+    watchDB.forEach(function (entry) {
         if ((entry.chatID === chatId) && (entry.ETHaddress === ETHaddress)) {
             bot.sendMessage(chatId, `I stopped monitoring the address ${entry.ETHaddress}.`);
             // Debug admin message for the bot owner
             bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone stopped watching the address\n${ETHaddress}\n`);
-            nothingToForget = false;    
+            nothingToForget = false;
         } else {
             newWatchDB.push(entry);
         }
@@ -126,16 +118,16 @@ bot.onText(/\/forget (.+)/, (msg, match) => {
 // Telegram /list command
 bot.onText(/\/list/, (msg) => {
     const chatId = msg.chat.id;
-    var nothingToList = true;
-    var listOfAddresses = '';
-    watchDB.forEach(function(entry) {
+    let nothingToList = true;
+    let listOfAddresses = '';
+    watchDB.forEach(function (entry) {
         if (entry.chatID === chatId) {
             nothingToList = false;
-            listOfAddresses = listOfAddresses + `* ${entry.ETHaddress}\n`;    
+            listOfAddresses = listOfAddresses + `* ${entry.ETHaddress}\n`;
         }
     });
     if (nothingToList) {
-        bot.sendMessage(chatId, `There are no addresses on your watchlist. Maybe time to add some!`);    
+        bot.sendMessage(chatId, `There are no addresses on your watchlist. Maybe time to add some!`);
     } else {
         bot.sendMessage(chatId, 'You are currently monitoring\n' + listOfAddresses);
     }
@@ -154,37 +146,39 @@ bot.onText(/\/check/, (msg) => {
 // *********************************
 
 async function checkAllAddresses() {
-    var debugNumberOfAlertsDelivered = 0;
-    var newWatchDB = [];
+
+    let debugNumberOfAlertsDelivered = 0;
+    let newWatchDB = [];
     // using the for i structure because it's async
-    for (var i = 0; i < watchDB.length; i++) {
-        var entry = watchDB[i];
+    for (let i = 0; i < watchDB.length; i++) {
+        let entry = watchDB[i];
         // we check if the balance has changed
-        const balance = await etherscan.account.balance(entry.ETHaddress);
-        if (balance.result === entry.currentBalance) {
+        const balance = await web3.eth.getBalance(entry.ETHaddress);
+        if (balance === entry.currentBalance) {
             // no transfer
         } else {
             // there was a transfer
-            var difference = (balance.result - entry.currentBalance) / 1000000000000000000;
+            let difference = (balance - entry.currentBalance) / 1e18;
             difference = difference.toFixed(4);
-            var balanceToDisplay = balance.result / 1000000000000000000;
+            let balanceToDisplay = balance / 1e18;
             balanceToDisplay = balanceToDisplay.toFixed(4);
+
             if (difference > 0) {
                 //incoming transfer
-                bot.sendMessage(entry.chatID, `I see incoming funds!\n\n${difference} ETH arrived to the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);    
+                bot.sendMessage(entry.chatID, `I see incoming funds!\n\n${difference} ETH arrived to the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
             } else {
                 //outgoing transfer
-                bot.sendMessage(entry.chatID, `Funds are flying out!\n\n${difference} ETH left the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);    
+                bot.sendMessage(entry.chatID, `Funds are flying out!\n\n${difference} ETH left the address ${entry.ETHaddress} since I've last checked.\nCurrent balance is ${balanceToDisplay} ETH.`);
             }
             // debug
             debugNumberOfAlertsDelivered = debugNumberOfAlertsDelivered + 1;
         }
         // if the entry is too old, we get rid of it
-        var date = new Date();
-        var now = date.getTime();
-        if ((entry.timeAddedToWatchlist + (24*60000*60)) > now) {
+        let date = new Date();
+        let now = date.getTime();
+        if ((entry.timeAddedToWatchlist + (24 * 60000 * 60)) > now) {
             //has been added less than 24h ago
-            const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance.result, entry.timeAddedToWatchlist);
+            const newEntry = new WatchEntry(entry.chatID, entry.ETHaddress, balance, entry.timeAddedToWatchlist);
             newWatchDB.push(newEntry);
         } else {
             bot.sendMessage(entry.chatID, `Due to API limitations, I can only watch an address for 24 hours.\n\nYou asked me to watch ${entry.ETHaddress} quite some time ago, so I dropped it from my list. Sorry about it!`);
@@ -198,14 +192,36 @@ async function checkAllAddresses() {
     }
 }
 
-function watch() {
-    // do the scan every minute
-    cron.schedule('*/1 * * * *', () => {
-        checkAllAddresses();
-    });
+function  watchAdd(ev){
+    const result = watchDB.filter(item => item.ETHaddress === ev.ETHaddress);
+
+    if(result.length === 0){
+        watchDB.push(ev);
+        fs.writeFileSync(WatchListFilePath,JSON.stringify(watchDB),'utf8')
+    }
+
+
 }
 
-bot.setWebHook(`${url}/bot${telegramBotToken}`);
-// kick it off
-watch();
 
+async function Main() {
+    cron.schedule('*/1 * * * *', () => {
+
+        checkAllAddresses();
+    });
+
+    try {
+        bot.sendMessage(botOwner, `--> ADMIN MESSAGE\nSomeone called the /check function.`);
+
+        let data = await fs.readFileSync(WatchListFilePath, 'utf8');
+        watchDB = JSON.parse(data);
+
+    } catch (e) {
+
+        fs.writeFileSync(WatchListFilePath, '', 'utf8',)
+    }
+
+}
+
+
+Main();
