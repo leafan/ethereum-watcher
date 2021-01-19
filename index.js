@@ -60,7 +60,7 @@ bot.on('message', (msg) => {
 
     const chatId = msg.chat.id;
     if (msg.text === '/watch') {
-        bot.sendMessage(chatId, 'You need to specify an address.\nType /watch followed by a valid ETH address like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>', {parse_mode: "HTML"});
+        bot.sendMessage(chatId, 'You need to specify an address.\nType /watch followed by a valid ETH address and memo like this:\n<code>/watch 0xB91986a9854be250aC681f6737836945D7afF6Fa memo </code>', {parse_mode: "HTML"});
     }
     if (msg.text === "/forget") {
         bot.sendMessage(chatId, 'You need to specify an address.\nType /forget followed by an address you are watching currently, like this:\n<code>/forget 0xB91986a9854be250aC681f6737836945D7afF6Fa</code>', {parse_mode: "HTML"});
@@ -70,7 +70,7 @@ bot.on('message', (msg) => {
 // Telegram /start command
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "***************\n\nHey there! I am a Telegram bot by @torsten1.\n\nI am here to watch Ethereum addresses. I will ping you if there's a change in balance. This is useful if you've just sent a transaction and want to be notified when it arrives. Due to API limitations, I can watch an address for no more than 24 hours.\n\n<b>Commands</b>\n\n* <code>/watch (address)</code> - start watching an address.\n* <code>/forget (address)</code> - stop watching an address.\n* <code>/list</code> - list the addresses you are watching.\n\nHave fun :)", {parse_mode: "HTML"});
+    bot.sendMessage(chatId, "***************\n\nHey there! I am a Telegram bot by @torsten1.\n\nI am here to watch Ethereum addresses. I will ping you if there's a change in balance. This is useful if you've just sent a transaction and want to be notified when it arrives. Due to API limitations, I can watch an address for no more than 24 hours.\n\n<b>Commands</b>\n\n* <code>/watch (address) (memo)</code> - start watching an address.\n* <code>/forget (address)</code> - stop watching an address.\n* <code>/list</code> - list the addresses you are watching.\n\nHave fun :)", {parse_mode: "HTML"});
 });
 
 // Telegram /watch command
